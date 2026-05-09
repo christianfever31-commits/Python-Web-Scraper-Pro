@@ -1,0 +1,851 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faceless AI Studio</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#9333ea"> <!-- electric violet-600 -->
+    <!-- PWA meta tags for iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Faceless AI">
+    <!-- Icons (placeholder, actual images would be needed) -->
+    <link rel="apple-touch-icon" href="/icon-192.png">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Custom styles for the Obsidian/Charcoal theme and Electric Violet accents */
+        :root {
+            --electric-violet-light: #d8b4fe; /* purple-300 */
+            --electric-violet-medium: #a78bfa; /* purple-400 */
+            --electric-violet-dark: #c084fc; /* purple-500 */
+        }
+
+        .neon-glow-text {
+            text-shadow: 0 0 5px var(--electric-violet-light), 0 0 10px var(--electric-violet-medium), 0 0 15px var(--electric-violet-dark);
+        }
+        .neon-glow-box {
+            box-shadow: 0 0 8px var(--electric-violet-medium), 0 0 15px var(--electric-violet-dark);
+        }
+        .neon-border-gradient {
+            border: 2px solid transparent;
+            position: relative;
+        }
+        .neon-border-gradient::before {
+            content: '';
+            position: absolute;
+            inset: -2px; /* Adjust to match border width */
+            border-radius: inherit; /* Inherit border-radius from parent */
+            padding: 2px; /* Acts as the border width */
+            background: linear-gradient(to right, var(--electric-violet-light), var(--electric-violet-dark), var(--electric-violet-light));
+            -webkit-mask:
+                linear-gradient(#fff 0 0) content-box,
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            z-index: -1; /* Place behind content */
+        }
+
+        .btn-neon {
+            @apply relative overflow-hidden bg-purple-700 text-white rounded-lg px-6 py-3 font-bold transition-all duration-300;
+            box-shadow: 0 0 5px theme('colors.purple.500'), 0 0 10px theme('colors.purple.600');
+        }
+        .btn-neon:hover {
+            @apply bg-purple-600;
+            box-shadow: 0 0 8px theme('colors.purple.400'), 0 0 15px theme('colors.purple.500');
+        }
+        .btn-neon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: all 0.6s ease;
+        }
+        .btn-neon:hover::before {
+            left: 100%;
+        }
+
+        /* Framer Motion inspired transitions */
+        .transition-transform-opacity {
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .panel-transition {
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        /* Generation Pipeline steps */
+        .pipeline-step {
+            @apply flex flex-col items-center flex-1 text-center p-3 rounded-xl transition-all duration-300 ease-in-out;
+            @apply bg-zinc-800 text-gray-500 border border-zinc-700;
+        }
+        .pipeline-step-active {
+            @apply bg-purple-900/40 text-electric-violet-light neon-border-gradient;
+        }
+        .pipeline-step-completed {
+            @apply bg-green-900/40 text-green-400 border-green-700;
+        }
+        .pipeline-step-icon {
+            @apply w-8 h-8 mb-2;
+        }
+        .pipeline-connector {
+            @apply flex-grow h-0.5 bg-zinc-700 mx-2 self-center transition-all duration-300 ease-in-out;
+        }
+        .pipeline-connector-active {
+            @apply bg-electric-violet-medium;
+        }
+        .pipeline-connector-completed {
+            @apply bg-green-500;
+        }
+
+
+        /* Custom spinner for loading animation */
+        .loader {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid var(--electric-violet-medium);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #27272a; /* zinc-800 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #a78bfa; /* purple-400 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #c084fc; /* purple-500 */
+        }
+
+        /* Typewriter effect for story output */
+        .typewriter-output {
+            overflow: hidden; /* Hide overflowing text */
+            font-family: 'SF Mono', 'Consolas', 'Monaco', monospace; /* Monospaced font */
+            white-space: pre-wrap; /* Preserve whitespace and allow wrapping */
+            word-break: break-word; /* Break long words */
+            height: 100%; /* Fill available height */
+        }
+        .typewriter-cursor {
+            border-right: .15em solid var(--electric-violet-medium); /* The blinking cursor */
+            animation: blink-caret .75s step-end infinite;
+        }
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: var(--electric-violet-medium); }
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-gray-200 font-sans min-h-screen flex flex-col p-4 md:p-8">
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        // Placeholder for manifest.json content (in a real PWA, this would be a separate file)
+        /*
+        {
+          "name": "Faceless AI",
+          "short_name": "Faceless AI",
+          "description": "Professional high-fidelity AI generation studio.",
+          "start_url": "./",
+          "display": "standalone",
+          "background_color": "#0F0F1A",
+          "theme_color": "#9333ea",
+          "icons": [
+            {
+              "src": "icon-192.png",
+              "sizes": "192x192",
+              "type": "image/png"
+            },
+            {
+              "src": "icon-512.png",
+              "sizes": "512x512",
+              "type": "image/png"
+            }
+          ]
+        }
+        */
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
+        // Placeholder for service-worker.js content (in a real PWA, this would be a separate file)
+        /*
+        const CACHE_NAME = 'faceless-ai-cache-v1';
+        const urlsToCache = [
+          './',
+          './index.html',
+          './manifest.json',
+          './icon-192.png', // Placeholder
+          './icon-512.png', // Placeholder
+        ];
+
+        self.addEventListener('install', (event) => {
+          event.waitUntil(
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                console.log('Opened cache');
+                return cache.addAll(urlsToCache);
+              })
+          );
+        });
+
+        self.addEventListener('fetch', (event) => {
+          event.respondWith(
+            caches.match(event.request)
+              .then((response) => {
+                if (response) {
+                  return response;
+                }
+                return fetch(event.request);
+              })
+          );
+        });
+        */
+    </script>
+
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-10 pb-4 border-b border-zinc-800">
+        <div class="flex items-center space-x-4">
+            <i data-lucide="ghost" class="w-8 h-8 text-purple-400 neon-glow-text"></i>
+            <h1 class="text-3xl font-extrabold text-gray-50 neon-glow-text">Faceless AI <span class="text-purple-400 text-xl">2026</span></h1>
+        </div>
+        <nav>
+            <button class="text-gray-400 hover:text-purple-300 transition-colors duration-200 focus:outline-none">
+                <i data-lucide="cog" class="w-6 h-6 inline-block mr-1"></i> Settings
+            </button>
+        </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow flex flex-col bg-zinc-900 rounded-2xl p-8 shadow-2xl neon-glow-box">
+
+        <!-- Mode Switcher -->
+        <div class="mb-8 flex justify-center gap-4">
+            <button id="mode-neural-command-btn" onclick="setStudioMode('neural-command')"
+                    class="btn-neon !bg-purple-700 !hover:bg-purple-600 text-white px-8 py-3 rounded-full text-lg font-bold transition-all duration-300">
+                <i data-lucide="brain" class="w-5 h-5 inline-block mr-2"></i> Neural Command
+            </button>
+            <button id="mode-story-architect-btn" onclick="setStudioMode('story-architect')"
+                    class="btn-neon !bg-zinc-700 !hover:bg-purple-700 text-gray-300 hover:text-white px-8 py-3 rounded-full text-lg font-bold transition-all duration-300">
+                <i data-lucide="book-text" class="w-5 h-5 inline-block mr-2"></i> Story Architect
+            </button>
+        </div>
+
+        <!-- Neural Command Mode Content -->
+        <div id="neural-command-mode" class="flex flex-col flex-grow">
+            <!-- Neural Command Input -->
+            <div class="mb-8 relative">
+                <label for="neural-command-input" class="block text-sm font-medium text-gray-400 mb-2">Neural Command</label>
+                <textarea id="neural-command-input"
+                          class="w-full h-40 p-5 pr-14 bg-zinc-800 text-gray-100 rounded-xl border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-500 resize-none text-lg transition-all duration-300"
+                          placeholder="Describe your creative vision: what kind of story, visuals, or animation do you want to generate? (e.g., 'A dystopian cityscape at dawn, with flying vehicles and a lone rebel figure. Generate a 30-second video sequence and a concept art image.')"
+                          oninput="handleNeuralCommandInput()"></textarea>
+                <button class="absolute bottom-5 right-5 text-purple-400 hover:text-purple-300 transition-colors" onclick="startGeneration()">
+                    <i data-lucide="zap" class="w-8 h-8"></i>
+                </button>
+            </div>
+
+            <!-- Generation Pipeline Status Bar -->
+            <div class="mb-10 flex items-center justify-between">
+                <div id="step-scripting" class="pipeline-step pipeline-step-active">
+                    <i data-lucide="clipboard-list" class="pipeline-step-icon"></i>
+                    <span class="text-sm font-semibold mt-1">Scripting</span>
+                </div>
+                <div id="connector-1" class="pipeline-connector"></div>
+                <div id="step-visualizing" class="pipeline-step">
+                    <i data-lucide="image" class="pipeline-step-icon"></i>
+                    <span class="text-sm font-semibold mt-1">Visualizing</span>
+                </div>
+                <div id="connector-2" class="pipeline-connector"></div>
+                <div id="step-animating" class="pipeline-step">
+                    <i data-lucide="film" class="pipeline-step-icon"></i>
+                    <span class="text-sm font-semibold mt-1">Animating</span>
+                </div>
+                <div id="connector-3" class="pipeline-connector"></div>
+                <div id="step-final-export" class="pipeline-step">
+                    <i data-lucide="upload" class="pipeline-step-icon"></i>
+                    <span class="text-sm font-semibold mt-1">Final Export</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Story Architect Mode Content (Hidden by default) -->
+        <div id="story-architect-mode" class="flex flex-col flex-grow hidden opacity-0 transition-opacity duration-300">
+            <div class="mb-8 relative">
+                <label for="story-prompt-input" class="block text-sm font-medium text-gray-400 mb-2">Short Story Idea</label>
+                <textarea id="story-prompt-input"
+                          class="w-full h-32 p-4 pr-14 bg-zinc-800 text-gray-100 rounded-xl border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-500 resize-none text-lg transition-all duration-300"
+                          placeholder="e.g., 'A lone astronaut discovers an ancient alien artifact on Mars.'"></textarea>
+                <button class="absolute bottom-4 right-4 text-purple-400 hover:text-purple-300 transition-colors" onclick="generateStory()">
+                    <i data-lucide="sparkles" class="w-7 h-7"></i>
+                </button>
+            </div>
+            <div class="flex-grow flex flex-col bg-zinc-800 rounded-xl p-4 overflow-y-auto relative custom-scrollbar neon-border-gradient">
+                <div class="absolute top-4 right-4 text-gray-600 text-sm">Story Output</div>
+                <p id="story-output" class="text-gray-300 text-lg leading-relaxed typewriter-output"></p>
+            </div>
+        </div>
+
+
+        <!-- Content Area: Preview Theatre and Asset Library (Always visible) -->
+        <div class="flex-grow grid grid-cols-1 lg:grid-cols-3 gap-8 overflow-hidden mt-8">
+
+            <!-- Preview Theatre -->
+            <div class="lg:col-span-2 bg-zinc-800 rounded-2xl p-6 flex flex-col shadow-inner neon-border-gradient">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-gray-50">Preview Theatre</h3>
+                    <i data-lucide="play-square" class="w-6 h-6 text-purple-400"></i>
+                </div>
+                <div id="preview-theatre-container" class="relative w-full aspect-video bg-zinc-950 rounded-lg overflow-hidden flex items-center justify-center flex-grow">
+                    <video id="ai-video-player" controls class="w-full h-full object-contain hidden">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div id="video-placeholder" class="text-gray-600 text-center flex flex-col items-center">
+                        <i data-lucide="monitor-play" class="w-16 h-16 mb-4 text-gray-700"></i>
+                        <p class="text-xl">Your generated masterpiece will appear here.</p>
+                    </div>
+                </div>
+                <p id="current-preview-prompt" class="text-gray-400 text-sm italic mt-4 hidden"></p>
+                <pre id="current-preview-script" class="text-gray-400 text-sm italic mt-2 p-2 bg-zinc-700 rounded-md hidden custom-scrollbar"></pre>
+                
+                <!-- Scene Visualizations Grid -->
+                <div id="scene-visualizations-container" class="mt-6 pt-4 border-t border-zinc-700 hidden">
+                    <h4 class="text-lg font-semibold text-gray-100 mb-4">Scene Visualizations</h4>
+                    <div id="scene-visualizations-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <!-- Scene images will be injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Asset Library -->
+            <div class="lg:col-span-1 bg-zinc-800 rounded-2xl p-6 flex flex-col shadow-inner neon-border-gradient">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-gray-50">Asset Library</h3>
+                    <i data-lucide="gallery" class="w-6 h-6 text-purple-400"></i>
+                </div>
+                <div id="asset-library-grid" class="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto custom-scrollbar">
+                    <!-- Assets will be injected here -->
+                    <div id="no-assets-placeholder" class="col-span-full text-center text-gray-600 py-10">
+                        <i data-lucide="folder-open" class="w-12 h-12 mb-3 text-gray-700"></i>
+                        <p>No assets yet.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Generation Loading Overlay -->
+        <div id="loading-overlay" class="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm flex items-center justify-center rounded-2xl hidden opacity-0 transition-opacity duration-300 z-50">
+            <div class="flex flex-col items-center">
+                <div class="loader mb-4"></div>
+                <p class="text-xl font-semibold text-gray-100 neon-glow-text" id="loading-status">Generating...</p>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        const neuralCommandInput = document.getElementById('neural-command-input');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingStatusText = document.getElementById('loading-status');
+
+        const pipelineSteps = [
+            { id: 'step-scripting', icon: 'clipboard-list', text: 'Scripting', duration: 1500 },
+            { id: 'step-visualizing', icon: 'image', text: 'Visualizing', duration: 2000 }, // Duration for ALL images
+            { id: 'step-animating', icon: 'film', text: 'Animating', duration: 2500 }, // Duration for video clips + stitching
+            { id: 'step-final-export', icon: 'upload', text: 'Final Export', duration: 1000 }
+        ];
+        const pipelineStepElements = pipelineSteps.map(step => document.getElementById(step.id));
+        const pipelineConnectors = [
+            document.getElementById('connector-1'),
+            document.getElementById('connector-2'),
+            document.getElementById('connector-3')
+        ];
+
+        const videoPlayer = document.getElementById('ai-video-player');
+        const videoPlaceholder = document.getElementById('video-placeholder');
+        const currentPreviewPrompt = document.getElementById('current-preview-prompt');
+        const currentPreviewScript = document.getElementById('current-preview-script');
+        const assetLibraryGrid = document.getElementById('asset-library-grid');
+        const noAssetsPlaceholder = document.getElementById('no-assets-placeholder');
+        // New elements for scene visualizations
+        const sceneVisualizationsContainer = document.getElementById('scene-visualizations-container');
+        const sceneVisualizationsGrid = document.getElementById('scene-visualizations-grid');
+
+        let currentGenerationPrompt = '';
+        let generationTimeout;
+
+        // Mode elements
+        const neuralCommandMode = document.getElementById('neural-command-mode');
+        const storyArchitectMode = document.getElementById('story-architect-mode');
+        const modeNeuralCommandBtn = document.getElementById('mode-neural-command-btn');
+        const modeStoryArchitectBtn = document.getElementById('mode-story-architect-btn');
+
+        // --- Global UI Functions ---
+        function showLoading(status = 'Generating...') {
+            loadingStatusText.textContent = status;
+            loadingOverlay.classList.remove('hidden');
+            setTimeout(() => loadingOverlay.classList.add('opacity-100'), 10); // Trigger transition
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.remove('opacity-100');
+            setTimeout(() => loadingOverlay.classList.add('hidden'), 300); // Allow transition to finish
+        }
+
+        function resetPipeline() {
+            pipelineStepElements.forEach(el => {
+                el.classList.remove('pipeline-step-active', 'pipeline-step-completed');
+                el.children[0].setAttribute('data-lucide', pipelineSteps.find(s => s.id === el.id).icon);
+            });
+            pipelineConnectors.forEach(el => el.classList.remove('pipeline-connector-active', 'pipeline-connector-completed'));
+            lucide.createIcons(); // Re-render icons
+        }
+
+        /**
+         * Orchestrator function to manage the generation pipeline.
+         * Simulates each step: Scripting (Gemini), Visualizing (Image Model),
+         * Animating (Video Model), and Final Export/Assembly.
+         */
+        async function startGeneration() {
+            const prompt = neuralCommandInput.value.trim();
+            if (!prompt) {
+                alert("Please enter a command to start generation!");
+                return;
+            }
+
+            currentGenerationPrompt = prompt;
+            neuralCommandInput.value = ''; // Clear input
+
+            showLoading();
+            resetPipeline();
+            // Clear previous scene visualizations
+            sceneVisualizationsGrid.innerHTML = '';
+            sceneVisualizationsContainer.classList.add('hidden');
+
+            let generatedScript = '';
+            let generatedImageUrls = [];
+            let finalVideoUrl = '';
+
+            // --- Orchestrator Step 1: Scripting (Gemini) ---
+            try {
+                const scriptingStepData = pipelineSteps[0];
+                const scriptingStepElement = pipelineStepElements[0];
+                scriptingStepElement.classList.add('pipeline-step-active');
+                loadingStatusText.textContent = 'Contacting Gemini for script...';
+                
+                // Simulate API call to Gemini
+                generatedScript = generateMockVideoScript(prompt); 
+                
+                await new Promise(resolve => setTimeout(resolve, scriptingStepData.duration));
+                scriptingStepElement.classList.remove('pipeline-step-active');
+                scriptingStepElement.classList.add('pipeline-step-completed');
+                scriptingStepElement.children[0].setAttribute('data-lucide', 'check-circle');
+                lucide.createIcons();
+                pipelineConnectors[0].classList.add('pipeline-connector-active');
+                await new Promise(resolve => setTimeout(resolve, 200)); // Small delay for connector animation
+            } catch (error) {
+                console.error("Scripting failed:", error);
+                hideLoading();
+                alert("Error during scripting. Please try again.");
+                return;
+            }
+
+
+            // --- Orchestrator Step 2: Visualizing (Image Model) ---
+            try {
+                const visualizingStepData = pipelineSteps[1];
+                const visualizingStepElement = pipelineStepElements[1];
+                
+                visualizingStepElement.classList.add('pipeline-step-active');
+                loadingStatusText.textContent = 'Visualizing: Analyzing script for scenes...';
+                
+                const scenes = parseScenesFromScript(generatedScript);
+                const imageGenerationDelayPerScene = visualizingStepData.duration / Math.max(1, scenes.length); // Distribute duration
+                
+                for (let i = 0; i < scenes.length; i++) {
+                    const scenePrompt = scenes[i];
+                    loadingStatusText.textContent = `Visualizing: Generating image for scene ${i + 1}/${scenes.length}...`;
+                    // Simulate image model call (e.g., to DALL-E, Midjourney, etc.)
+                    await new Promise(resolve => setTimeout(resolve, imageGenerationDelayPerScene)); 
+                    
+                    const imageUrl = `https://picsum.photos/seed/${Date.now() + i}/400/300`; // Unique image per scene
+                    // Add to Asset Library
+                    addGeneratedImageAsset(`Visual for Scene ${i + 1}: ${scenePrompt}`, imageUrl);
+                    generatedImageUrls.push({ prompt: scenePrompt, url: imageUrl }); // Store prompt along with URL for preview
+                }
+
+                // Manually complete step 2 and activate connector 2, as the loop manages its internal delays
+                visualizingStepElement.classList.remove('pipeline-step-active');
+                visualizingStepElement.classList.add('pipeline-step-completed');
+                visualizingStepElement.children[0].setAttribute('data-lucide', 'check-circle');
+                lucide.createIcons();
+                pipelineConnectors[1].classList.add('pipeline-connector-active');
+                await new Promise(resolve => setTimeout(resolve, 200)); // Small delay for connector animation
+            } catch (error) {
+                console.error("Visualizing failed:", error);
+                hideLoading();
+                alert("Error during visualizing. Please try again.");
+                return;
+            }
+
+
+            // --- Orchestrator Step 3: Animating (Video Model like Veo) ---
+            try {
+                const animatingStepData = pipelineSteps[2];
+                const animatingStepElement = pipelineStepElements[2];
+
+                animatingStepElement.classList.add('pipeline-step-active');
+                loadingStatusText.textContent = `Animating: Sending ${generatedImageUrls.length} images to video model (e.g., Veo)...`;
+
+                // Simulate sending images to Veo (or similar) and getting back video clips
+                const videoClipGenerationDelayPerImage = (animatingStepData.duration / 2) / Math.max(1, generatedImageUrls.length);
+                for (let i = 0; i < generatedImageUrls.length; i++) {
+                     loadingStatusText.textContent = `Animating: Generating clip for image ${i + 1}/${generatedImageUrls.length}...`;
+                     await new Promise(resolve => setTimeout(resolve, videoClipGenerationDelayPerImage));
+                }
+                
+                loadingStatusText.textContent = 'Animating: Receiving and processing video clips...';
+                // Simulate receiving all clips and potentially initial processing of them
+                await new Promise(resolve => setTimeout(resolve, animatingStepData.duration / 2));
+
+                finalVideoUrl = 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'; // Placeholder Veo output
+                
+                // Manually complete step 3 and activate connector 3
+                animatingStepElement.classList.remove('pipeline-step-active');
+                animatingStepElement.classList.add('pipeline-step-completed');
+                animatingStepElement.children[0].setAttribute('data-lucide', 'check-circle');
+                lucide.createIcons();
+                pipelineConnectors[2].classList.add('pipeline-connector-active');
+                await new Promise(resolve => setTimeout(resolve, 200));
+            } catch (error) {
+                console.error("Animating failed:", error);
+                hideLoading();
+                alert("Error during animating. Please try again.");
+                return;
+            }
+
+
+            // --- Orchestrator Step 4: The Assembly (Browser) & Final Export ---
+            try {
+                const finalExportStepData = pipelineSteps[3];
+                const finalExportStepElement = pipelineStepElements[3];
+                finalExportStepElement.classList.add('pipeline-step-active');
+                loadingStatusText.textContent = 'Assembling final video and exporting...';
+                // In a real app, this would involve client-side video stitching if multiple clips were received,
+                // or simply preparing the final video for display/download if a single URL from Veo.
+                await new Promise(resolve => setTimeout(resolve, finalExportStepData.duration));
+                finalExportStepElement.classList.remove('pipeline-step-active');
+                finalExportStepElement.classList.add('pipeline-step-completed');
+                finalExportStepElement.children[0].setAttribute('data-lucide', 'check-circle');
+                lucide.createIcons();
+                // No connector after last step, so no pipelineConnectors[3].classList.add('pipeline-connector-active')
+            } catch (error) {
+                console.error("Final Export/Assembly failed:", error);
+                hideLoading();
+                alert("Error during final export. Please try again.");
+                return;
+            }
+
+
+            // --- Final Output Display ---
+            setTimeout(() => {
+                hideLoading();
+                displayGeneratedOutput(prompt, generatedScript, finalVideoUrl, generatedImageUrls); // Display video, script, and scene images
+            }, 500); // A small delay after pipeline completes before showing output
+        }
+
+
+        // Helper to simulate Gemini's script generation
+        function generateMockVideoScript(prompt) {
+            const scriptTitle = prompt.length > 50 ? prompt.substring(0, 47) + '...' : prompt;
+            return `
+**Video Script: "${scriptTitle}" (Approx. 30 Seconds)**
+
+**SCENE 1: OPENING (0-5 seconds)**
+[VISUAL]: Establishing shot of a ${prompt.toLowerCase().includes('dystopian') ? 'gritty, rain-slicked dystopian cityscape' : 'vibrant, futuristic metropolis'} at ${prompt.toLowerCase().includes('dawn') ? 'dawn' : 'sunset'}. Flying vehicles (aerocars) glide silently between towering skyscrapers.
+[AUDIO]: Eerie, ambient synth music builds. Distant hum of technology.
+
+**SCENE 2: CHARACTER INTRODUCTION (5-15 seconds)**
+[VISUAL]: Camera focuses on a lone figure (the 'rebel') silhouetted against a neon-lit alleyway. Close-up on their determined expression. They subtly check a small, glowing device on their wrist. Quick cuts to surveillance drones passing overhead.
+[AUDIO]: Music becomes more urgent. Footsteps on wet pavement. Soft, mechanical whirring of drones.
+
+**SCENE 3: MOMENT OF DECISION/ACTION (15-25 seconds)**
+[VISUAL]: The rebel moves stealthily, navigating through crowded futuristic market stalls or scaling a wall. A sudden obstacle (e.g., a laser grid, patrolling guard) appears. The rebel uses agility or technology to bypass it.
+[AUDIO]: Tense, percussive music. Sound of laser gate powering down/up, or quick, muffled footsteps.
+
+**SCENE 4: RESOLUTION / CLIFFHANGER (25-30 seconds)**
+[VISUAL]: The rebel reaches a high vantage point, overlooking a central, imposing structure. They activate their device, sending a pulse of light into the sky. A quick, wide shot of the city, then a sharp cut to black or a close-up of an ominous symbol on the structure.
+[AUDIO]: Music swells dramatically, then cuts abruptly with a single, resonant thrum.
+`;
+        }
+
+        function parseScenesFromScript(script) {
+            const scenes = [];
+            const lines = script.split('\n');
+            let currentSceneVisual = '';
+            let inScene = false;
+
+            for (const line of lines) {
+                if (line.trim().startsWith('**SCENE') && line.includes(':')) {
+                    if (inScene && currentSceneVisual.trim() !== '') {
+                        scenes.push(currentSceneVisual.trim());
+                    }
+                    currentSceneVisual = '';
+                    inScene = true;
+                } else if (inScene && line.trim().startsWith('[VISUAL]:')) {
+                    currentSceneVisual += line.trim().replace('[VISUAL]:', '').trim() + ' ';
+                } else if (inScene && line.trim() !== '' && !line.trim().startsWith('[AUDIO]:')) {
+                    // Append other relevant lines to visual description, avoiding audio cues
+                    currentSceneVisual += line.trim() + ' ';
+                }
+            }
+            if (inScene && currentSceneVisual.trim() !== '') {
+                scenes.push(currentSceneVisual.trim());
+            }
+            return scenes.filter(s => s.length > 0);
+        }
+
+
+        function displayGeneratedOutput(prompt, script, videoUrl, sceneImageObjects) {
+            videoPlayer.src = videoUrl;
+            videoPlayer.load();
+            videoPlayer.play().catch(e => console.error("Video auto-play failed:", e));
+
+            currentPreviewPrompt.textContent = `Generated from: "${prompt}"`;
+            currentPreviewScript.textContent = script; // Display the generated script
+
+            videoPlaceholder.classList.add('hidden');
+            videoPlayer.classList.remove('hidden');
+            currentPreviewPrompt.classList.remove('hidden');
+            currentPreviewScript.classList.remove('hidden');
+
+            // Display scene images
+            sceneVisualizationsGrid.innerHTML = ''; // Clear previous images
+            if (sceneImageObjects && sceneImageObjects.length > 0) {
+                sceneImageObjects.forEach((imgObj, index) => {
+                    const sceneImageCard = `
+                        <div class="relative bg-zinc-700 rounded-lg overflow-hidden shadow-md group neon-border-gradient transition-all duration-300 hover:scale-105">
+                            <img src="${imgObj.url}" alt="Scene ${index + 1} visualization" class="w-full h-24 object-cover object-center">
+                            <div class="absolute inset-0 bg-zinc-900/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none group-hover:pointer-events-auto p-2">
+                                <span class="text-white text-xs text-center">${imgObj.prompt}</span>
+                                <div class="absolute bottom-2 flex w-full justify-around gap-1 px-2">
+                                    <button onclick="viewAsset('${imgObj.url}', 'Scene ${index + 1}')" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs py-1 px-2 rounded-md transition-colors duration-200 pointer-events-auto">
+                                        <i data-lucide="eye" class="w-3 h-3 inline-block"></i>
+                                    </button>
+                                    <button onclick="downloadAsset('${imgObj.url}', 'Scene ${index + 1}')" class="flex-1 bg-zinc-600 hover:bg-zinc-500 text-white text-xs py-1 px-2 rounded-md transition-colors duration-200 pointer-events-auto">
+                                        <i data-lucide="download" class="w-3 h-3 inline-block"></i>
+                                    </button>
+                                    <button onclick="enhanceImage('${imgObj.url}', 'Scene ${index + 1}')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded-md transition-colors duration-200 pointer-events-auto">
+                                        <i data-lucide="sparkles" class="w-3 h-3 inline-block"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    sceneVisualizationsGrid.insertAdjacentHTML('beforeend', sceneImageCard);
+                });
+                sceneVisualizationsContainer.classList.remove('hidden');
+                lucide.createIcons(); // Re-create icons for newly added elements
+            }
+        }
+
+        function addGeneratedImageAsset(prompt, imageUrl) {
+            const assetCard = `
+                <div class="relative bg-zinc-700 rounded-lg overflow-hidden shadow-md group neon-border-gradient flex flex-col transition-all duration-300 hover:scale-105">
+                    <img src="${imageUrl}" alt="${prompt}" class="w-full h-28 object-cover object-center">
+                    <div class="p-2">
+                        <p class="text-xs text-gray-300 truncate">${prompt}</p>
+                        <div class="flex justify-around gap-1 mt-2">
+                            <button onclick="viewAsset('${imageUrl}', '${prompt}')" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs py-1 px-2 rounded-md transition-colors duration-200">
+                                <i data-lucide="eye" class="w-3 h-3 inline-block"></i> View
+                            </button>
+                            <button onclick="downloadAsset('${imageUrl}', '${prompt}')" class="flex-1 bg-zinc-600 hover:bg-zinc-500 text-white text-xs py-1 px-2 rounded-md transition-colors duration-200">
+                                <i data-lucide="download" class="w-3 h-3 inline-block"></i> Download
+                            </button>
+                            <button onclick="enhanceImage('${imageUrl}', '${prompt}')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded-md transition-colors duration-200">
+                                <i data-lucide="sparkles" class="w-3 h-3 inline-block"></i> Enhance
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (noAssetsPlaceholder) {
+                noAssetsPlaceholder.classList.add('hidden');
+            }
+            assetLibraryGrid.insertAdjacentHTML('afterbegin', assetCard);
+            lucide.createIcons(); // Re-render icons for newly added elements
+        }
+
+        function viewAsset(url, prompt) {
+            alert(`Viewing asset: "${prompt}". In a real app, this would open a full-size modal or load into the Preview Theatre if it's a video.`);
+            // Example: If it's a video, load it into the main player
+            // if (url.endsWith('.mp4')) {
+            //     videoPlayer.src = url;
+            //     videoPlayer.load();
+            //     videoPlayer.play().catch(e => console.error("Video auto-play failed:", e));
+            //     currentPreviewPrompt.textContent = `Viewing asset: "${prompt}"`;
+            //     currentPreviewScript.classList.add('hidden'); // Hide script if viewing image
+            //     videoPlaceholder.classList.add('hidden');
+            //     videoPlayer.classList.remove('hidden');
+            //     currentPreviewPrompt.classList.remove('hidden');
+            // } else {
+            //     // Handle image display in a modal or separate section
+            // }
+        }
+
+        function downloadAsset(url, prompt) {
+            console.log(`Downloading asset: ${prompt} from ${url}`);
+            const link = document.createElement('a');
+            link.href = url;
+            // Determine file extension (simple example)
+            const extension = url.split('.').pop().split('?')[0];
+            link.download = `faceless-ai-asset-${Date.now()}.${extension === '400/300' ? 'png' : extension}`; // Default to png for picsum
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function enhanceImage(url, prompt) {
+            console.log(`Enhancing image: ${prompt} from ${url}`);
+            alert(`AI is enhancing the image "${prompt}". Please wait...`);
+            // In a real app, this would trigger another AI process
+        }
+
+
+        // --- Story Architect Mode Logic ---
+        const storyPromptInput = document.getElementById('story-prompt-input');
+        const storyOutputElement = document.getElementById('story-output');
+
+        async function generateStory() {
+            const userPrompt = storyPromptInput.value.trim();
+
+            if (!userPrompt) {
+                alert("Please enter a short story idea!");
+                return;
+            }
+
+            showLoading('Crafting your narrative...'); // Show global loading with custom status
+
+            // Simulate AI story generation
+            setTimeout(() => {
+                hideLoading(); // Hide global loading
+
+                const generatedStory = `
+                **Chapter 1: The Crimson Discovery**
+                On the arid, rust-colored plains of Mars, astronaut Elara Vance meticulously surveyed her dig site. Years had passed since humanity first set foot on the red planet, yet its deepest secrets remained elusive. Today, however, a glint of unnatural geometry beneath the Martian dust heralded a monumental shift. Her automated excavator, usually precise, faltered, its sensor array screaming anomalies. Elara, with her heart thudding a frantic rhythm against her ribs, knew this was it. She donned her EVA suit and descended into the trench, her boots crunching on ancient Martian rock. There, half-buried, was an object unlike anything natural: a perfectly smooth, obsidian-black tetrahedron, pulsing with a faint, internal purple luminescence. An alien artifact.
+
+                **Chapter 2: Whispers from the Void**
+                Bringing the artifact back to the habitat was an arduous task, its material strangely resistant to conventional tools, its weight defying its size. Once secured in the sterile lab, its subtle pulse intensified. Elara began a series of non-invasive scans. No known element, no discernible seams. As she placed her hand upon its cool, slick surface, a jolt coursed through her, not electric, but psychic. Images flooded her mind: swirling galaxies, ancient beings bathed in cosmic light, a symphony of mathematical constructs that spoke of universal truths. The artifact wasn't just an object; it was a conduit, a repository of interstellar knowledge, whispering secrets across eons.
+
+                **Chapter 3: The Directive**
+                The psychic link grew stronger, clearer. The artifact, which Elara mentally dubbed 'The Lumen,' began to transmit a directive, not in words, but in a profound sense of purpose. It needed to be activated, aligned with a specific celestial event. A conjunction, ancient and rare, was approaching—a moment when Mars, Earth, and a distant nebula would form a cosmic triad. The Lumen was a key, designed to unlock something vast and unimaginable, a gateway to understanding the very fabric of existence. Elara grappled with the implications: sharing this with Earth Command meant potential weaponization, exploitation. The artifact felt benign, but humanity’s touch was often corrupting.
+
+                **Chapter 4: A Race Against Time**
+                Torn between her duty and her burgeoning understanding, Elara made a choice. The Lumen’s gentle guidance felt more trustworthy than any human protocol. She began to reconfigure her habitat's external arrays, adapting them to the Lumen's complex energy requirements. She worked in secret, feigning equipment malfunctions to avoid scrutiny from the orbital surveillance. The clock was ticking. Each Martian sunrise brought the celestial alignment closer. Fatigue gnawed at her, but the Lumen's presence was a constant, calming hum, an alien guardian in the quiet expanse of her lab. The weight of galactic destiny rested solely on her shoulders.
+
+                **Chapter 5: Echoes of Eternity**
+                The day of the conjunction arrived, bathed in the eerie purple glow of the distant nebula. With a final, agonizing adjustment, Elara initiated the activation sequence. The Lumen flared, its purple light erupting into a magnificent, swirling vortex that filled the lab, then pierced the habitat ceiling, reaching for the heavens. It wasn't destructive; it was pure energy, a beacon. Across the vastness of space, a faint, rhythmic pulse echoed back, a response. Elara watched, awe-struck, as the Martian sky shimmered, and felt a profound connection, not just to The Lumen, but to the entire cosmos. The short prompt from a human mind had awakened an ancient song, and Mars was now singing with the universe.
+                `.replace(/\n\s+/g, '\n').trim(); // Clean up extra spaces/newlines
+
+                typeWriter('story-output', generatedStory, 30); // Type out the story
+                storyOutputElement.scrollTop = 0; // Scroll to top initially
+                storyPromptInput.value = ''; // Clear story prompt
+            }, 3000); // Simulate 3 seconds for AI to write the story
+        }
+
+        let typeInterval;
+        function typeWriter(elementId, text, delay = 50) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = ''; // Clear existing text
+            clearInterval(typeInterval); // Clear any previous typewriter
+            let i = 0;
+            element.classList.add('typewriter-cursor'); // Add blinking cursor
+            typeInterval = setInterval(() => {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    // Scroll to bottom if content overflows
+                    if (element.scrollHeight > element.clientHeight + 50) { // +50px buffer
+                        element.scrollTop = element.scrollHeight - element.clientHeight;
+                    }
+                } else {
+                    clearInterval(typeInterval);
+                    element.classList.remove('typewriter-cursor'); // Remove cursor
+                }
+            }, delay);
+        }
+
+        // --- Mode Switching Logic ---
+        function setStudioMode(mode) {
+            if (mode === 'neural-command') {
+                neuralCommandMode.classList.remove('hidden', 'opacity-0');
+                storyArchitectMode.classList.add('hidden', 'opacity-0');
+                modeNeuralCommandBtn.classList.remove('!bg-zinc-700', 'text-gray-300');
+                modeNeuralCommandBtn.classList.add('!bg-purple-700', 'text-white');
+                modeStoryArchitectBtn.classList.remove('!bg-purple-700', 'text-white');
+                modeStoryArchitectBtn.classList.add('!bg-zinc-700', 'text-gray-300');
+            } else if (mode === 'story-architect') {
+                storyArchitectMode.classList.remove('hidden', 'opacity-0');
+                neuralCommandMode.classList.add('hidden', 'opacity-0');
+                modeStoryArchitectBtn.classList.remove('!bg-zinc-700', 'text-gray-300');
+                modeStoryArchitectBtn.classList.add('!bg-purple-700', 'text-white');
+                modeNeuralCommandBtn.classList.remove('!bg-purple-700', 'text-white');
+                modeNeuralCommandBtn.classList.add('!bg-zinc-700', 'text-gray-300');
+                resetPipeline(); // Reset pipeline visual when switching away from Neural Command
+            }
+            hideLoading(); // Ensure loading is hidden on mode switch
+            // Clear preview theatre for new content type or reset
+            videoPlayer.classList.add('hidden');
+            videoPlaceholder.classList.remove('hidden');
+            currentPreviewPrompt.classList.add('hidden');
+            currentPreviewScript.classList.add('hidden'); // Also hide the script preview
+            sceneVisualizationsContainer.classList.add('hidden'); // Hide scene images
+            // Recreate Lucide icons in case any new ones appear in the switched panel
+            lucide.createIcons();
+        }
+
+        // Initial setup on load
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            resetPipeline();
+            setStudioMode('neural-command'); // Set default mode
+        });
+    </script>
+</body>
+</html>

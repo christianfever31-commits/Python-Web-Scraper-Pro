@@ -1,0 +1,5 @@
+--- New Entry ---
+name=Ezenwa Christian&email=ezenwachristian083@gmail.com&message="Hello from Ezenwa Christian" 
+
+ENTRY: name=Ezenwa Christian&email=ezenwachristian083@gmail.com&message=Hello from ezenwa Christian 
+ENTRY: name=Ezenwa Christian&email=ezenwachristian083@gmail.com&message=G

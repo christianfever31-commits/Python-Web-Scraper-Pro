@@ -1,0 +1,359 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Alien Shooter</title>
+    <!-- Google Font for arcade style text -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* Prevent scrolling */
+            background-color: #080808; /* Very dark background for neon contrast */
+            font-family: 'Press Start 2P', cursive;
+            color: #eee;
+            /* Disable common touch gestures on mobile */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        canvas {
+            display: block;
+            touch-action: none; /* Prevent default browser touch actions like pan and zoom */
+        }
+
+        #score {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 1.2em;
+            color: #00ffcc; /* Cyan neon color */
+            text-shadow: 0 0 8px #00ffcc, 0 0 15px #00ffcc; /* Neon glow effect */
+            z-index: 10; /* Ensure score is above canvas */
+        }
+
+        #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.85); /* Semi-transparent overlay */
+            display: flex; /* Centering content with flexbox */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 20; /* Ensure game over screen is on top */
+            color: #ff00ff; /* Magenta neon color */
+            text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff; /* Stronger neon glow */
+            /* Initially hidden */
+            display: none;
+        }
+
+        #gameOverScreen h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        #gameOverScreen p {
+            font-size: 1.5em;
+            margin-bottom: 30px;
+            color: #00ffcc; /* Cyan neon */
+            text-shadow: 0 0 8px #00ffcc;
+        }
+
+        #restartButton {
+            background-color: transparent;
+            border: 3px solid #00ff00; /* Green neon border */
+            color: #00ff00; /* Green neon text */
+            padding: 15px 30px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.2em;
+            cursor: pointer;
+            text-shadow: 0 0 8px #00ff00;
+            box-shadow: 0 0 15px #00ff00;
+            transition: all 0.2s ease-in-out; /* Smooth transition for hover effect */
+        }
+
+        #restartButton:hover {
+            background-color: #00ff00; /* Fill with green on hover */
+            color: #000; /* Dark text on hover */
+            text-shadow: none; /* Remove text shadow on hover */
+            box-shadow: 0 0 25px #00ff00; /* Stronger box shadow on hover */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="score">Score: 0</div>
+    <div id="gameOverScreen">
+        <h1>GAME OVER!</h1>
+        <p id="finalScore"></p>
+        <button id="restartButton">RESTART</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const restartButton = document.getElementById('restartButton');
+
+        let score = 0;
+        let gameOver = false;
+        let animationFrameId; // To store the requestAnimationFrame ID for cancellation
+
+        // Game Constants
+        const PLAYER_WIDTH = 60;
+        const PLAYER_HEIGHT = 40;
+        const BULLET_WIDTH = 6;
+        const BULLET_HEIGHT = 15;
+        const BULLET_SPEED = 10;
+        const ALIEN_WIDTH = 50;
+        const ALIEN_HEIGHT = 40;
+        const SHOOT_DELAY = 150; // Milliseconds between player shots
+        let ALIEN_SPAWN_DELAY = 1500; // Initial delay between alien spawns (ms)
+        const MIN_ALIEN_SPAWN_DELAY = 300; // Minimum spawn delay to prevent overwhelming
+        const ALIEN_SPEED_MULTIPLIER = 0.00005; // How much alien speed increases per score point
+        const INITIAL_ALIEN_SPEED = 1; // Base speed for aliens
+
+        // Helper function to adjust canvas size to fill the window
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // Reposition player to center horizontally on resize if game is active
+            if (player) {
+                player.x = canvas.width / 2 - player.width / 2;
+                player.y = canvas.height - player.height - 30; // Keep player near bottom
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // Player Class Definition
+        class Player {
+            constructor() {
+                this.width = PLAYER_WIDTH;
+                this.height = PLAYER_HEIGHT;
+                this.x = canvas.width / 2 - this.width / 2; // Start in the middle of the screen
+                this.y = canvas.height - this.height - 30; // Position near the bottom
+                this.color = '#00ffcc'; // Cyan neon color
+            }
+
+            draw() {
+                ctx.shadowBlur = 18; // Apply neon glow effect
+                ctx.shadowColor = this.color;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y + this.height);
+                ctx.lineTo(this.x + this.width / 2, this.y);
+                ctx.lineTo(this.x + this.width, this.y + this.height);
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0; // Reset shadow to not affect other drawings
+            }
+
+            update(newX) {
+                // Ensure player stays within canvas bounds horizontally
+                this.x = Math.max(0, Math.min(canvas.width - this.width, newX - this.width / 2));
+            }
+        }
+
+        // Bullet Class Definition
+        class Bullet {
+            constructor(x, y) {
+                this.width = BULLET_WIDTH;
+                this.height = BULLET_HEIGHT;
+                this.x = x - this.width / 2; // Center bullet on player's firing point
+                this.y = y;
+                this.speed = BULLET_SPEED;
+                this.color = '#00ff00'; // Green neon color
+            }
+
+            draw() {
+                ctx.shadowBlur = 10; // Apply neon glow
+                ctx.shadowColor = this.color;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.shadowBlur = 0; // Reset shadow
+            }
+
+            update() {
+                this.y -= this.speed; // Move bullet upwards
+            }
+        }
+
+        // Alien Class Definition
+        class Alien {
+            constructor(x, y, currentTotalScore) {
+                this.width = ALIEN_WIDTH;
+                this.height = ALIEN_HEIGHT;
+                this.x = x;
+                this.y = y;
+                // Alien speed increases with the current score, making the game progressively harder
+                this.speed = INITIAL_ALIEN_SPEED + (currentTotalScore * ALIEN_SPEED_MULTIPLIER);
+                this.colors = ['#ff00ff', '#ffff00', '#ff0000']; // Magenta, Yellow, Red neon colors
+                this.color = this.colors[Math.floor(Math.random() * this.colors.length)]; // Random alien color
+            }
+
+            draw() {
+                ctx.shadowBlur = 15; // Apply neon glow
+                ctx.shadowColor = this.color;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width / 2, this.y);
+                ctx.lineTo(this.x + this.width, this.y + this.height / 2);
+                ctx.lineTo(this.x + this.width / 2, this.y + this.height);
+                ctx.lineTo(this.x, this.y + this.height / 2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0; // Reset shadow
+            }
+
+            update() {
+                this.y += this.speed; // Move alien downwards
+            }
+        }
+
+        // Game state variables
+        let player;
+        let bullets = [];
+        let aliens = [];
+        let lastShootTime = 0; // Timestamp of the last player shot
+        let lastAlienSpawnTime = 0; // Timestamp of the last alien spawn
+        let touchX = canvas.width / 2; // Initial touch X position, defaults to center
+
+        // Initialize or Reset Game State
+        function initGame() {
+            cancelAnimationFrame(animationFrameId); // Stop any existing animation loop
+            player = new Player();
+            bullets = [];
+            aliens = [];
+            score = 0;
+            gameOver = false;
+            scoreDisplay.textContent = 'Score: 0';
+            gameOverScreen.style.display = 'none'; // Hide game over screen
+            lastShootTime = 0;
+            lastAlienSpawnTime = 0;
+            ALIEN_SPAWN_DELAY = 1500; // Reset alien spawn delay to initial value
+            resizeCanvas(); // Ensure canvas is correctly sized at start
+            animationFrameId = requestAnimationFrame(animate); // Start the new animation loop
+        }
+
+        // Handle Touch Input for Player Movement
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Prevent default browser gestures (e.g., scrolling, zooming)
+            if (gameOver) return; // Ignore input if game is over
+            touchX = e.touches[0].clientX; // Get X coordinate of the first touch
+        }, { passive: false }); // Use {passive: false} to allow preventDefault
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (gameOver) return;
+            touchX = e.touches[0].clientX;
+        }, { passive: false });
+
+        // Main Game Loop
+        function animate(currentTime) {
+            if (gameOver) {
+                gameOverScreen.style.display = 'flex'; // Show game over screen
+                finalScoreDisplay.textContent = `FINAL SCORE: ${score}`;
+                return; // Stop the animation loop
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the entire canvas
+            // Apply a slight fade with a dark overlay to create a "trailing" effect,
+            // enhancing the neon visual style by making elements appear to glow and move
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw player
+            player.update(touchX);
+            player.draw();
+
+            // Player automatic shooting logic
+            if (currentTime - lastShootTime > SHOOT_DELAY) {
+                bullets.push(new Bullet(player.x + player.width / 2, player.y));
+                lastShootTime = currentTime;
+            }
+
+            // Update and draw bullets; remove bullets that go off-screen
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                bullet.update();
+                bullet.draw();
+                if (bullet.y < 0) { // If bullet goes above the screen
+                    bullets.splice(i, 1);
+                }
+            }
+
+            // Alien spawning logic
+            if (currentTime - lastAlienSpawnTime > ALIEN_SPAWN_DELAY) {
+                // Spawn alien at a random X position, avoiding edges
+                const x = Math.random() * (canvas.width - ALIEN_WIDTH - 60) + 30;
+                aliens.push(new Alien(x, -ALIEN_HEIGHT, score)); // Spawn slightly off-screen top
+                lastAlienSpawnTime = currentTime;
+                // Gradually decrease spawn delay to increase difficulty
+                ALIEN_SPAWN_DELAY = Math.max(MIN_ALIEN_SPAWN_DELAY, ALIEN_SPAWN_DELAY * 0.98);
+            }
+
+            // Update and draw aliens; handle collisions
+            for (let i = aliens.length - 1; i >= 0; i--) {
+                const alien = aliens[i];
+                alien.update();
+                alien.draw();
+
+                // Check if alien has reached the bottom of the screen (game over condition)
+                if (alien.y > canvas.height) {
+                    gameOver = true;
+                    break; // Exit loop if game over
+                }
+
+                // Check for collision between player and alien
+                if (
+                    player.x < alien.x + alien.width &&
+                    player.x + player.width > alien.x &&
+                    player.y < alien.y + alien.height &&
+                    player.y + player.height > alien.y
+                ) {
+                    gameOver = true;
+                    break; // Exit loop if game over
+                }
+
+                // Check for collision between bullets and aliens
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    const bullet = bullets[j];
+                    if (
+                        bullet.x < alien.x + alien.width &&
+                        bullet.x + bullet.width > alien.x &&
+                        bullet.y < alien.y + alien.height &&
+                        bullet.y + bullet.height > alien.y
+                    ) {
+                        // Collision detected!
+                        score += 10; // Increase player score
+                        scoreDisplay.textContent = `Score: ${score}`;
+                        aliens.splice(i, 1); // Remove the hit alien
+                        bullets.splice(j, 1); // Remove the bullet
+                        break; // A bullet can only hit one alien, move to next alien
+                    }
+                }
+            }
+
+            animationFrameId = requestAnimationFrame(animate); // Request next animation frame
+        }
+
+        // Event listener for the restart button
+        restartButton.addEventListener('click', initGame);
+
+        // Initial call to start the game when the page loads
+        initGame();
+    </script>
+</body>
+</html>

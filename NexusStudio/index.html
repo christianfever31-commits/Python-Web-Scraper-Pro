@@ -1,0 +1,183 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Studio - Future of Design</title>
+    <!-- Tailwind CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Google Fonts - Inter for a modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Base font for the body */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom Glassmorphism styles */
+        .glassmorphism {
+            background-color: rgba(255, 255, 255, 0.08); /* White with low opacity */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); /* For Safari support */
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 1rem; /* Equivalent to Tailwind rounded-xl */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Glowing button effect (Tailwind-compatible box-shadow animation) */
+        .glowing-button-tailwind {
+            box-shadow: 0 0px 30px rgba(168, 85, 247, 0.7), 0 0px 60px rgba(168, 85, 247, 0.5), 0 0px 100px rgba(168, 85, 247, 0.3);
+            transition: all 0.3s ease-in-out;
+            animation: pulse-glow 2s infinite alternate;
+        }
+
+        .glowing-button-tailwind:hover {
+            box-shadow: 0 0px 40px rgba(168, 85, 247, 0.9), 0 0px 80px rgba(168, 85, 247, 0.7), 0 0px 120px rgba(168, 85, 247, 0.5);
+        }
+
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0px 20px rgba(168, 85, 247, 0.7), 0 0px 40px rgba(168, 85, 247, 0.5);
+            }
+            100% {
+                box-shadow: 0 0px 30px rgba(168, 85, 247, 0.9), 0 0px 60px rgba(168, 85, 247, 0.7);
+            }
+        }
+
+        /* Dark input field styles for the contact form */
+        .dark-input {
+            background-color: rgba(255, 255, 255, 0.05); /* Very subtle white background */
+            border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle white border */
+            color: #e2e8f0; /* text-gray-200 */
+        }
+        .dark-input::placeholder {
+            color: rgba(255, 255, 255, 0.4); /* Lighter placeholder text */
+        }
+        .dark-input:focus {
+            outline: none;
+            border-color: #A78BFA; /* Tailwind purple-400 */
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.5); /* Focus ring effect */
+        }
+
+        /* Hero section background pulsating light effect */
+        .bg-radial-gradient-purple-gray {
+            background: radial-gradient(circle at center, rgba(168, 85, 247, 0.1) 0%, rgba(168, 85, 247, 0.05) 20%, rgba(0,0,0,0) 70%);
+        }
+        @keyframes pulse-light {
+            0% { opacity: 0.15; transform: scale(1); }
+            50% { opacity: 0.25; transform: scale(1.05); }
+            100% { opacity: 0.15; transform: scale(1); }
+        }
+        .animate-pulse-light {
+            animation: pulse-light 6s infinite ease-in-out;
+        }
+
+        /* Custom text gradient animation for titles */
+        .animate-pulse { /* Overrides default Tailwind pulse, or add a new class */
+            animation: text-gradient-pulse 3s infinite alternate;
+        }
+        @keyframes text-gradient-pulse {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-950 via-gray-900 to-black text-gray-100 selection:bg-purple-600 selection:text-white">
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+        <div class="text-center z-10 max-w-4xl mx-auto">
+            <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 animate-pulse drop-shadow-lg">
+                Nexus Studio
+            </h1>
+            <p class="text-lg md:text-2xl text-gray-300 max-w-3xl mx-auto mb-10 leading-relaxed drop-shadow-lg">
+                Unleash Your Vision. Experience the Future of Digital Creation with Cutting-Edge AI and Automated Design.
+            </p>
+            <a href="#contact" class="inline-block px-10 py-5 text-lg font-bold rounded-full text-white bg-purple-700 hover:bg-purple-800 focus:outline-none focus:ring-4 focus:ring-purple-300 transition-all duration-300 glowing-button-tailwind">
+                Launch Your Project
+            </a>
+        </div>
+        <!-- Background elements for visual appeal -->
+        <div class="absolute inset-0 z-0 flex items-center justify-center">
+            <div class="absolute inset-0 bg-radial-gradient-purple-gray animate-pulse-light"></div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 md:py-32 px-4">
+        <div class="container mx-auto">
+            <h2 class="text-4xl md:text-5xl font-extrabold text-center mb-16 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 drop-shadow-lg">
+                Revolutionize Your Workflow
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 max-w-5xl mx-auto">
+
+                <!-- Feature Card 1: AI App Generation -->
+                <div class="glassmorphism p-6 md:p-8 rounded-2xl flex flex-col items-start hover:shadow-purple-500/30 transition-shadow duration-300 transform hover:-translate-y-1">
+                    <div class="mb-4 text-purple-400">
+                        <!-- SVG icon for AI/App -->
+                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl md:text-3xl font-bold mb-4 text-white">AI App Generation</h3>
+                    <p class="text-gray-300 leading-relaxed">
+                        Transform your ideas into fully functional applications with our advanced AI. Describe your concept, and watch as Nexus Studio intelligently designs, codes, and deploys your custom app, tailored to your specifications.
+                    </p>
+                </div>
+
+                <!-- Feature Card 2: Automated Web Design -->
+                <div class="glassmorphism p-6 md:p-8 rounded-2xl flex flex-col items-start hover:shadow-pink-500/30 transition-shadow duration-300 transform hover:-translate-y-1">
+                    <div class="mb-4 text-pink-400">
+                        <!-- SVG icon for Web Design -->
+                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9.25 10.75a.75.75 0 011.5-.25L11.5 17h-1.75zM12 21a9 9 0 110-18 9 9 0 010 18zm-2.75-8.25h5.5l-.25-2.5h-5l-.25 2.5zM12 15a1 1 0 100-2 1 1 0 000 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl md:text-3xl font-bold mb-4 text-white">Automated Web Design</h3>
+                    <p class="text-gray-300 leading-relaxed">
+                        Say goodbye to tedious manual coding. Our platform leverages AI to automate the entire web design process, from wireframing to responsive development, delivering stunning, pixel-perfect websites in record time.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Form Section -->
+    <section id="contact" class="py-20 md:py-32 px-4">
+        <div class="container mx-auto max-w-lg">
+            <h2 class="text-4xl md:text-5xl font-extrabold text-center mb-16 text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-red-500 drop-shadow-lg">
+                Get in Touch
+            </h2>
+            <form action="#" method="POST" class="glassmorphism p-6 md:p-10 rounded-2xl shadow-xl">
+                <div class="mb-6">
+                    <label for="name" class="block text-gray-300 text-sm font-bold mb-2">Name</label>
+                    <input type="text" id="name" name="name" class="dark-input shadow-sm appearance-none rounded-lg w-full py-3 px-4 leading-tight focus:shadow-outline transition-all duration-200" placeholder="John Doe" required>
+                </div>
+                <div class="mb-6">
+                    <label for="email" class="block text-gray-300 text-sm font-bold mb-2">Email</label>
+                    <input type="email" id="email" name="email" class="dark-input shadow-sm appearance-none rounded-lg w-full py-3 px-4 leading-tight focus:shadow-outline transition-all duration-200" placeholder="you@example.com" required>
+                </div>
+                <div class="mb-6">
+                    <label for="message" class="block text-gray-300 text-sm font-bold mb-2">Message</label>
+                    <textarea id="message" name="message" rows="5" class="dark-input shadow-sm appearance-none rounded-lg w-full py-3 px-4 leading-tight focus:shadow-outline transition-all duration-200" placeholder="Tell us about your project or inquiry..." required></textarea>
+                </div>
+                <div class="flex items-center justify-center">
+                    <button type="submit" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-8 rounded-full focus:outline-none focus:shadow-outline transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                        Send Message
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-10 text-center text-gray-500 text-sm">
+        <p>&copy; 2023 Nexus Studio. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>
