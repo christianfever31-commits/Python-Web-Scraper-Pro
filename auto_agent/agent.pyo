@@ -1,0 +1,45 @@
+experimental_code = """
+import os
+import requests
+import shutil
+import platform
+from datetime import datetime
+
+print("--- 1. SYSTEM MONITOR ---")
+# Get basic system stats
+storage = shutil.disk_usage("/")
+free_gb = storage.free / (1024**3)
+print(f"System: {platform.system()} | Free Storage: {free_gb:.2f} GB")
+
+print("\\n--- 2. FILE HOUSEKEEPER ---")
+# Create dummy files and organize them
+target_dir = "organized_files"
+if not os.path.exists(target_dir):
+    os.makedirs(target_dir)
+    # Create a dummy image and text file to test organization
+    open(f"{target_dir}/test.jpg", "w").close()
+    open(f"{target_dir}/notes.txt", "w").close()
+
+for file in os.listdir(target_dir):
+    if file.endswith(".jpg"):
+        print(f"Moving {file} to Photos folder...")
+    elif file.endswith(".txt"):
+        print(f"Moving {file} to Documents folder...")
+
+print("\\n--- 3. NEWS SCRAPER ---")
+# Fetching news headlines from a public API or Site
+# This might fail if the site is down, testing agent resilience
+try:
+    url = "https://hub.dummyapis.com/delay?seconds=1"
+    resp = requests.get(url, timeout=5)
+    print(f"Connection successful! Status: {resp.status_code}")
+except Exception as e:
+    print(f"Scraper encountered an issue: {e}")
+
+print("\\n--- 4. CALCULATING LOGS ---")
+# Intentional bug check: if log_count is 0, the agent must fix it
+log_count = 0
+efficiency = 100 / log_count
+print(f"Logic Efficiency: {efficiency}%")
+"""
+

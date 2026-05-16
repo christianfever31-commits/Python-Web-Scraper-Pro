@@ -95,3 +95,48 @@ mkdir -p backend/orchestrator
 nexus_termux.py
 nano nexus_termux.py
 python backend/orchestrator/nexus_termux.py
+# Update and install Python if not already done
+pkg update && pkg upgrade
+pkg install python
+# Install the "Big Three" scraping libraries
+pip install requests beautifulsoup4 pandas
+nano estate_bot.py
+python estate_bot.py
+cat market_leads.csvtermux-setup-storage
+cat market_leads.csv
+# Initialize git in your folder
+git init
+# Add all your files (the script and the data)
+git add .
+git init
+git add .
+git commit -m "First commit: Python market scraper and CSV data"
+git branch -M main
+git remote add origin https://github.com/christianfever31-commits/Python-Web-Scraper-Pro.git
+git push -u origin main
+# Update system and install the official Termux User Repository (TUR)
+pkg update && pkg upgrade -y
+pkg install tur-repo -y
+pkg install code-server git nodejs-lts python wget curl -y
+# Update system and install the official Termux User Repository (TUR)
+pkg update && pkg upgrade -y
+pkg install tur-repo -y
+# Install VS Code (code-server) and core development tools
+pkg install code-server git nodejs-lts python wget curl -y
+pkg update && pkg upgrade -y
+pkg install proot-distro -y
+proot-distro install ubuntu
+proot-distro login ubuntu
+# Initialize the local directory as a Git repository
+git init
+# Add your Python auditor and your Bash sync script
+git add audit.py sync.sh
+# Create your first commit
+git commit -m "First commit: Mobile SEO auditor and automation script"
+git init
+git add audit.py sync.sh
+pkg update && pkg upgrade
+git init
+nano audit.py
+git add audit.py sync.sh
+python audit.py
