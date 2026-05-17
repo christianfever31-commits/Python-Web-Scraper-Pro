@@ -1,0 +1,20 @@
+{
+    "wallet_usd": 16.4,
+    "tax_reserve_usd": 4.1,
+    "total_earned_gross": 20.5,
+    "tasks_completed": 2,
+    "history": [
+        {
+            "date": "2026-05-17 01:21:46",
+            "task": "Ad-Revenue Optimization",
+            "earned": "$12.50",
+            "net": "$10.00"
+        },
+        {
+            "date": "2026-05-17 01:21:46",
+            "task": "Data Scraping Task",
+            "earned": "$8.00",
+            "net": "$6.40"
+        }
+    ]
+}
