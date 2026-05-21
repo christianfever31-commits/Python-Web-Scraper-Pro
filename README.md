@@ -1,13 +1,12 @@
-# Auto-Agent 🤖
+# 🚀 SEO Pro Auditor: Mobile-First Technical SEO
 
-An autonomous, self-healing Python bot developed in **Termux**.
+I built this tool because I noticed most SEO diagnostic tools require a heavy desktop setup. As a developer who works primarily in **Termux**, I wanted a way to run deep technical audits directly from my phone without sacrificing detail.
 
-## Features
-* **Self-Correction:** Automatically fixes NameErrors and MathErrors.
-* **File Management:** Organizes local directories and creates backups.
-* **GitHub Integration:** Automatically tracks and pushes updates.
+### 🛠 What it does
+- **Automated Crawling:** Scrapes site metadata using Python.
+- **Health Checks:** Identifies broken links, missing alt tags, and slow response times.
+- **Client-Ready Reports:** Generates a clean diagnostic summary.
 
-## Installation
-```bash
-python super_agent.py
+### 🧠 The Challenge
+The biggest hurdle was managing memory usage on a mobile device while parsing large HTML structures. I optimized the script to process data in chunks, ensuring it stays fast and stable in a mobile terminal.
 
