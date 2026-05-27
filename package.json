@@ -1,8 +1,10 @@
 {
   "type": "module",
   "dependencies": {
+    "@ai-sdk/google": "^3.0.75",
     "@gradio/client": "^2.2.0",
     "@huggingface/inference": "^4.13.15",
+    "ai": "^6.0.184",
     "node-fetch": "^3.3.2"
   }
 }
